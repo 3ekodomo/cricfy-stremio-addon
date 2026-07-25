@@ -4,18 +4,31 @@ const providers = require("./lib/providers");
 // 1. Define the Manifest
 const manifest = {
     id: "org.cricfy.stremio",
-    version: "1.0.1", // Version bumped to ensure Stremio/Nuvio updates the cache
+    version: "1.0.2", // Bumped version to ensure Stremio updates the cache
     name: "Cricfy Sports",
     description: "Live sports streams ported from Kodi",
-    // Added 'catalog' and 'meta' to resources so it appears in the UI
     resources: ["catalog", "meta", "stream"], 
-    types: ["tv", "sport"],
-    // Defined a catalog so it shows up in Stremio's discover section
+    types: ["tv"],
     catalogs: [
         {
             type: "tv",
             id: "cricfy_catalog",
-            name: "Cricfy Channels"
+            name: "Cricfy Channels",
+            // This 'extra' block creates the drop-down menu for Providers in Stremio
+            extra: [
+                {
+                    name: "genre",
+                    options: [
+                        "Tata Play", 
+                        "Hotstar", 
+                        "FanCode IND", 
+                        "SonyLIV", 
+                        "Jio IND", 
+                        "Sun Direct"
+                    ],
+                    isRequired: false
+                }
+            ]
         }
     ],
     idPrefixes: ["cricfy_"]
@@ -23,31 +36,40 @@ const manifest = {
 
 const builder = new addonBuilder(manifest);
 
-// 2. Define the Catalog Handler (Populates the Stremio Discover page)
-builder.defineCatalogHandler(async ({ type, id }) => {
+// 2. Define the Catalog Handler (Filters by Provider)
+builder.defineCatalogHandler(async (args) => {
+    const { type, id, extra } = args;
+    
     if (type === "tv" && id === "cricfy_catalog") {
-        return {
-            metas: [
-                {
-                    id: "cricfy_channel_1",
-                    type: "tv",
-                    name: "Sports Channel 1",
-                    poster: "https://via.placeholder.com/250x375.png?text=Sports+1" 
-                },
-                {
-                    id: "cricfy_channel_2",
-                    type: "tv",
-                    name: "Sports Channel 2",
-                    poster: "https://via.placeholder.com/250x375.png?text=Sports+2"
-                }
-                // Once your m3u_parser is built, you can dynamically map parsed channels here
-            ]
-        };
+        let channels = [];
+        
+        // Detect which provider the user selected from the drop-down menu
+        const selectedProvider = extra && extra.genre ? extra.genre : "Tata Play"; 
+        
+        // Populate channels based on the selected provider
+        if (selectedProvider === "Tata Play") {
+            channels = [
+                { id: "cricfy_tata_1", type: "tv", name: "Star Sports 1 HD", poster: "https://via.placeholder.com/250x375.png?text=SS1+HD" },
+                { id: "cricfy_tata_2", type: "tv", name: "Star Sports 2 HD", poster: "https://via.placeholder.com/250x375.png?text=SS2+HD" }
+            ];
+        } else if (selectedProvider === "Hotstar") {
+            channels = [
+                { id: "cricfy_hotstar_1", type: "tv", name: "Star Sports Khel", poster: "https://via.placeholder.com/250x375.png?text=SS+Khel" },
+                { id: "cricfy_hotstar_2", type: "tv", name: "Star Gold HD", poster: "https://via.placeholder.com/250x375.png?text=Star+Gold" }
+            ];
+        } else if (selectedProvider === "Sun Direct") {
+            channels = [
+                { id: "cricfy_sun_1", type: "tv", name: "Sun TV HD", poster: "https://via.placeholder.com/250x375.png?text=Sun+TV" }
+            ];
+        }
+        // ... Add additional else-if statements for FanCode IND, SonyLIV, Jio IND, etc.
+
+        return { metas: channels };
     }
     return { metas: [] };
 });
 
-// 3. Define the Meta Handler (Provides details when a user clicks a channel)
+// 3. Define the Meta Handler
 builder.defineMetaHandler(async ({ type, id }) => {
     if (type === "tv" && id.startsWith("cricfy_")) {
         return {
@@ -57,36 +79,27 @@ builder.defineMetaHandler(async ({ type, id }) => {
                 name: "Cricfy Live Event",
                 poster: "https://via.placeholder.com/250x375.png?text=Live",
                 background: "https://via.placeholder.com/1280x720.png?text=Background",
-                description: "Live sports broadcast fetched dynamically."
+                description: "Live broadcast for " + id
             }
         };
     }
     return { meta: {} };
 });
 
-// 4. Define the Stream Handler (Fetches the actual video link when Play is clicked)
+// 4. Define the Stream Handler
 builder.defineStreamHandler(async ({ type, id }) => {
-    if (type === "tv" || type === "sport") {
+    if (type === "tv") {
         try {
-            // Pass the requested Stremio ID to your provider logic
             const streamUrl = await providers.getStreamUrl(id);
-            
             if (streamUrl) {
                 return {
-                    streams: [
-                        {
-                            title: "Cricfy Live Stream",
-                            url: streamUrl
-                        }
-                    ]
+                    streams: [{ title: "Cricfy Live", url: streamUrl }]
                 };
             }
         } catch (error) {
             console.error("Failed to fetch stream:", error);
         }
     }
-    
-    // Return empty streams array if nothing is found
     return { streams: [] };
 });
 
