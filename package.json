@@ -1,0 +1,17 @@
+{
+  "name": "cricfy-stremio-addon",
+  "version": "1.0.0",
+  "description": "Stremio add-on for Cricfy sports streams",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js"
+  },
+  "dependencies": {
+    "stremio-addon-sdk": "^1.14.2",
+    "express": "^4.18.2",
+    "axios": "^1.6.0"
+  },
+  "engines": {
+    "node": ">=18.x"
+  }
+}
