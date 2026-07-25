@@ -24,7 +24,7 @@ const manifest = {
 const builder = new addonBuilder(manifest);
 
 // 2. Define the Catalog Handler (Populates the Stremio Discover page)
-builder.defineCatalogHandler(({ type, id }) => {
+builder.defineCatalogHandler(async ({ type, id }) => {
     if (type === "tv" && id === "cricfy_catalog") {
         return {
             metas: [
@@ -48,7 +48,7 @@ builder.defineCatalogHandler(({ type, id }) => {
 });
 
 // 3. Define the Meta Handler (Provides details when a user clicks a channel)
-builder.defineMetaHandler(({ type, id }) => {
+builder.defineMetaHandler(async ({ type, id }) => {
     if (type === "tv" && id.startsWith("cricfy_")) {
         return {
             meta: {
