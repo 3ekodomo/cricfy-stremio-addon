@@ -4,7 +4,7 @@ const providers = require("./lib/providers");
 // 1. Manifest Definition
 const manifest = {
     id: "org.cricfy.stremio",
-    version: "1.0.3", // Version bump to reset client cache
+    version: "1.0.4",
     name: "Cricfy Sports",
     description: "Live sports streams ported from Kodi",
     resources: ["catalog", "meta", "stream"], 
@@ -14,17 +14,14 @@ const manifest = {
             type: "tv",
             id: "cricfy_catalog",
             name: "Cricfy Channels",
+            // We can leave extra empty or just default options, but since genres are dynamic based on providers,
+            // Stremio supports omitting options and we just filter if passed, but it's better to list standard ones
+            // if we want them to show up. However, since the providers are fetched asynchronously,
+            // the manifest is static at startup unless we delay building.
+            // For now, let's keep it simple and omit predefined genres to allow all.
             extra: [
                 {
                     name: "genre",
-                    options: [
-                        "Tata Play", 
-                        "Hotstar", 
-                        "FanCode IND", 
-                        "SonyLIV", 
-                        "Jio IND", 
-                        "Sun Direct"
-                    ],
                     isRequired: false
                 }
             ]
@@ -33,6 +30,7 @@ const manifest = {
     idPrefixes: ["cricfy_"]
 };
 
+// We create the builder synchronously
 const builder = new addonBuilder(manifest);
 
 // 2. Dynamic Catalog Handler
